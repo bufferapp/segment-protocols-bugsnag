@@ -21,14 +21,14 @@ violations_map = {"Invalid Type": InvalidType, "Required": Required}
 
 def main(request):
     data = request.get_json()
-    properties = data["properties"]
 
-    violation = violations_map[properties["violationType"]]
+    properties = data["properties"]
+    violation = violations_map.get(properties["violationType"])
     context = properties["violationField"] + " - " + properties["sourceSlug"]
-    bugsnag.notify(
-        violation(properties["violationDescription"]),
-        context=context,
-        meta_data=properties,
+    description = (
+        properties["violationField"] + " - " + properties["violationDescription"]
     )
 
-    return data
+    bugsnag.notify(violation(description), context=context, meta_data=properties)
+
+    return "OK"
