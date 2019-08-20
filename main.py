@@ -8,29 +8,21 @@ bugsnag.configure(
 )
 
 
-class InvalidType(Exception):
-    pass
-
-
-class Required(Exception):
-    pass
-
-
-violations_map = {"Invalid Type": InvalidType, "Required": Required}
-
-
 def main(request):
     data = request.get_json()
 
     properties = data["properties"]
-    violation = violations_map.get(properties["violationType"])
+
+    violation_type = properties["violationType"].replace(" ", "")
+    custom_exception = type(violation_type, (Exception,), {})
+
     context = properties["violationField"] + " - " + properties["sourceSlug"]
     description = (
         properties["violationField"] + " - " + properties["violationDescription"]
     )
 
     bugsnag.notify(
-        violation(description),
+        custom_exception(description),
         context=context,
         meta_data=properties,
         grouping_hash=context,
