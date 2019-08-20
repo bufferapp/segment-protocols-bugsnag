@@ -1,5 +1,6 @@
 import bugsnag
 import os
+import base64
 
 stage = os.getenv("STAGE", "development")
 
@@ -11,16 +12,22 @@ bugsnag.configure(
 def main(request):
     data = request.get_json()
 
-    properties = data["properties"]
+    # Authentication
+    token = request.headers.get("Authorization").split()[1]
+    decoded_token = base64.b64decode(token)[:-1].decode()
+    if str(decoded_token) != str(os.getenv("AUTH_TOKEN")):
+        return "Unauthorized", 401
 
+    # Get information about the violations
+    properties = data["properties"]
     violation_type = properties["violationType"].replace(" ", "")
     custom_exception = type(violation_type, (Exception,), {})
-
     context = properties["violationField"] + " - " + properties["sourceSlug"]
     description = (
         properties["violationField"] + " - " + properties["violationDescription"]
     )
 
+    # Notify Bugsnag
     bugsnag.notify(
         custom_exception(description),
         context=context,
@@ -29,4 +36,4 @@ def main(request):
         severity="error",
     )
 
-    return "OK"
+    return "OK", 200
