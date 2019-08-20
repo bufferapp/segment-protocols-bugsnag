@@ -29,6 +29,12 @@ def main(request):
         properties["violationField"] + " - " + properties["violationDescription"]
     )
 
-    bugsnag.notify(violation(description), context=context, meta_data=properties)
+    bugsnag.notify(
+        violation(description),
+        context=context,
+        meta_data=properties,
+        grouping_hash=context,
+        severity="error",
+    )
 
     return "OK"
